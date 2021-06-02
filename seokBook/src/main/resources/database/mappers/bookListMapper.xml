@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sb.s1.bookList.BookListDAO">
+
+	
+
+	<select id="getSelect" parameterType="BookListDTO" resultType="BookListDTO">
+	SELECT gb.isbn,gb.bookname,gb.price,gb.author,gb.gnumber,gb.ebookprice,gb.bookcontent,gb.bookidx,
+		gb.bookpub,gb.bookscore,gb.bookpubdate,gb.bookimg,gb.scorecount,gb.bPoint,gb.gname FROM 
+		(SELECT b.*,g.gname FROM booklist b, genre g where b.gnumber = g.gnumber and b.isbn=#{isbn})gb
+		
+	</select>
+	
+	<select id="getList" resultType="BookListDTO">
+		SELECT gb.isbn,gb.bookname,gb.price,gb.author,gb.gnumber,gb.ebookprice,gb.bookcontent,gb.bookidx,
+		gb.bookpub,gb.bookscore,gb.bookpubdate,gb.bookimg,gb.scorecount,gb.bPoint,gb.gname FROM 
+		(SELECT ROWNUM r, b.*,g.gname FROM booklist b, genre g where b.gnumber = g.gnumber and b.gnumber=#{gnumber})gb
+		where gb.r between #{startRow} and #{endRow}
+	</select>
+	
+	<select id="getTotalCount" parameterType="Pager" resultType="Long">
+		select count(gnumber) from booklist where gnumber=#{gNumber}
+	</select>
+	
+
+
+	<select id="searchBookList" parameterType="BookListDTO" resultType="BookListDTO">
+		select br.isbn, br.bookname, br.price, br.bookcontent, br.bookPub, 
+		br.bookimg, br.bookscore, br.author, br.bookpubdate, br.bpoint
+		from (select rownum r, bl.* from booklist bl where author like '%'||#{author}||'%' 
+			or bookname like '%'||#{bookName}||'%' or isbn like '%'||#{isbn}||'%' 
+			or bookpub like '%'||#{bookPub}||'%' or gnumber like '%'||#{gNumber}||'%')br 
+		where r between 1 and 10
+	</select>
+	<select id="getListforpur" parameterType="java.util.List" resultType="BookListDTO">
+		select * from Booklist where 
+		<foreach collection="list" item="item" separator="or">
+			isbn=#{item.isbn}
+		</foreach>
+	</select>
+	
+	<update id="updateScore" parameterType="ReviewDTO">
+		update booklist set bookscore=bookscore+#{revScore}, scorecount=scorecount+1 where isbn=#{isbn}
+	</update>
+	<update id="deleteScore" parameterType="ReviewDTO">
+		update booklist set bookscore=bookscore-#{revScore}, scorecount=scorecount-1 where isbn=#{isbn}
+	</update>
+
+</mapper>

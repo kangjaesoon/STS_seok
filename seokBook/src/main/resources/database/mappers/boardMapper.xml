@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sb.s1.board.BoardDAO">
+	<select id="getList" parameterType="Pager" resultType="BoardDTO">
+		SELECT subnum,id,regdate,content,subname,boardsp,visitcount FROM 
+		(SELECT B.*, ROWNUM RN FROM (select * from BOARD where BOARDSP = #{boardsp} 
+		<if test='boardsp.equals("oldbooklist")'>or boardsp = 'saleend' or boardsp = 'oldbooksale'</if>) B 
+		where 
+		<choose>
+			<when test="kind=='all'">
+				B.id like '%'||#{search}||'%' or B.content like '%'||#{search}||'%' or B.subname like '%'||#{search}||'%') 
+			</when>
+			<when test="kind=='id'">
+				B.id like '%' || #{search} || '%')
+			</when>
+			<when test="kind=='content'">
+				B.content like '%' || #{search} || '%')
+			</when>
+			<otherwise>
+				B.subname like '%' || #{search} || '%')
+			</otherwise>
+		</choose>
+		
+		WHERE (RN BETWEEN #{startRow} AND #{endRow}) order by subnum asc
+	</select>
+	<select id="getSelect" parameterType="BoardDTO" resultType="BoardDTO">
+		SELECT * FROM BOARD WHERE SUBNUM=#{subnum}
+	</select>
+	<select id="getTotalcount" parameterType="Pager" resultType="Long">
+		SELECT COUNT(SUBNUM) FROM BOARD WHERE BOARDSP = #{boardsp} 
+		<if test='boardsp.equals("oldbooklist")'>or boardsp = 'oldbooksale' or boardsp = 'saleend'</if>
+	</select>
+	<insert id="setBoard" parameterType="BoardDTO">
+		INSERT INTO BOARD VALUES(B_SN_SEQ.NEXTVAL, #{id}, SYSDATE, #{content}, 
+								#{subname}, #{boardsp}, 0)
+	</insert>
+	<delete id="delBoard" parameterType="BoardDTO">
+		DELETE FROM BOARD WHERE SUBNUM = #{subnum}
+	</delete>
+	<update id="updateBoard" parameterType="BoardDTO">
+		UPDATE BOARD SET CONTENT = #{content}, SUBNAME = #{subname}, VISITCOUNT = #{visitcount}, 
+									BOARDSP=#{boardsp} WHERE SUBNUM = #{subnum}
+	</update>
+	<update id="setHit" parameterType="BoardDTO">
+		UPDATE BOARD SET VISITCOUNT = #{visitcount}+1 WHERE SUBNUM = #{subnum}
+	</update>
+
+	<select id="searchOldbooksaleList" parameterType="BoardDTO" resultType="BoardDTO">
+		select boa.boardsp, boa.subnum, boa.subname, boa.regdate, boa.id, boa.visitcount  
+		from (select rownum r, bd.* from (select * from board where boardsp='oldbooksale' or boardsp = 'saleend') bd
+		where subname like '%'||#{subname}||'%' or id like '%'||#{id}||'%' or content like '%'||#{content}||'%'
+		order by subnum asc) boa where r between 1 and 10
+	</select>
+</mapper>

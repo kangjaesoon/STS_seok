@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sb.s1.orderList.OrderListDAO">
+
+
+
+   <select id="PointList" parameterType="Pager"
+      resultType="OrderListDTO">
+      
+      select purdate,purnum,bpoint,pointusage from (select rownum R, booklist.*, orderlist.*, purchase.*
+            from booklist inner join purchase on booklist.isbn = purchase.isbn left outer join
+            orderlist on purchase.ordernumber = orderlist.ordernumber
+            where purchase.id =  #{id} order by purdate desc)
+           where R between  #{startRow} and #{endRow}
+      
+              </select>
+
+   <insert id="insertOrderList" parameterType="OrderListDTO">
+      insert into orderlist
+      values(#{orderNumber}, #{pointUsage}, #{lumpSum})
+   </insert>
+   
+   <select id="getTotalCount"  parameterType="Pager"  resultType="long">
+   select count(orderlist.ordernumber) from orderlist inner join purchase on orderlist.ordernumber =  purchase.ordernumber where purchase.id = #{id}
+     
+   </select>
+
+</mapper>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sb.s1.response.ResponseDAO">
+	<select id="getList" parameterType="Pager" resultType="ResponseDTO">
+		SELECT res.resnum, res.id, res.regdate, res.content, res.subnum, res.step, res.depth 
+		FROM (select rownum r, re.* from RESPONSE re where re.subnum=#{subnum} order by re.step asc) res 
+		WHERE res.r between #{startRow} and #{endRow} order by res.step asc
+	</select>
+	<select id="getTotal" parameterType="ResponseDTO" resultType="Long">
+		SELECT COUNT(*) FROM RESPONSE where subnum=#{subnum}
+	</select>
+	<select id="getListfordelete" parameterType="ResponseDTO" resultType="ResponseDTO">
+		select * from response where subnum=#{subnum} and step >= #{step} and depth > #{depth} or resnum=#{resnum}
+	</select>
+	<insert id="insertResponse" parameterType="ResponseDTO">
+		INSERT INTO RESPONSE VALUES(RES_RN_SEQ.NEXTVAL, #{id}, SYSDATE, #{content}, #{subnum}, #{step}, #{depth})
+	</insert>
+	<update id="updateForInsert" parameterType="ResponseDTO">
+			update response set step = step+1 where (subnum = #{subnum}) and (step >= #{step})
+	</update>
+	<update id="updateResponse" parameterType="ResponseDTO">
+		UPDATE RESPONSE SET CONTENT=#{content} where resnum = #{resnum}
+	</update>
+	<update id="updateAfterDelete" parameterType="Pager">
+		update (select * from response where subnum=#{subnum}) set step=step-#{curBlock} 
+		where step>=#{curPage} 
+	</update>
+	<delete id="delResponse" parameterType="java.util.List">
+		DELETE from response
+		<where>
+			<foreach collection="list" item="item" separator="OR">
+				(resnum=#{item.resnum})
+			</foreach>
+		</where>
+	</delete>
+</mapper>
